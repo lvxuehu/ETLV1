@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 124
+/svn/datasupport/!svn/ver/4016/datasupport/project/GameETL/ETLProject/Version1.0/GameETL1.2.1/src/com/wanmei/test/map/reduce
+END
+ClearIdentifiesRun.java
+K 25
+svn:wc:ra_dav:version-url
+V 148
+/svn/datasupport/!svn/ver/3565/datasupport/project/GameETL/ETLProject/Version1.0/GameETL1.2.1/src/com/wanmei/test/map/reduce/ClearIdentifiesRun.java
+END
+ContainRun.java
+K 25
+svn:wc:ra_dav:version-url
+V 140
+/svn/datasupport/!svn/ver/3342/datasupport/project/GameETL/ETLProject/Version1.0/GameETL1.2.1/src/com/wanmei/test/map/reduce/ContainRun.java
+END
+NoEtlGameRun.java
+K 25
+svn:wc:ra_dav:version-url
+V 142
+/svn/datasupport/!svn/ver/4016/datasupport/project/GameETL/ETLProject/Version1.0/GameETL1.2.1/src/com/wanmei/test/map/reduce/NoEtlGameRun.java
+END
+OrderRun.java
+K 25
+svn:wc:ra_dav:version-url
+V 138
+/svn/datasupport/!svn/ver/3342/datasupport/project/GameETL/ETLProject/Version1.0/GameETL1.2.1/src/com/wanmei/test/map/reduce/OrderRun.java
+END
+FileNumberRun.java
+K 25
+svn:wc:ra_dav:version-url
+V 143
+/svn/datasupport/!svn/ver/3854/datasupport/project/GameETL/ETLProject/Version1.0/GameETL1.2.1/src/com/wanmei/test/map/reduce/FileNumberRun.java
+END

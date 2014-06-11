@@ -1,0 +1,716 @@
+package com.wanmei.game.tool;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapreduce.Counter;
+import org.apache.hadoop.mapreduce.CounterGroup;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper.Context;
+
+
+
+
+
+/**
+ * 
+ *@author lihui
+ *游戏工具类
+ *
+ *  2013-10-10  下午03:49:21
+ */
+public class GameTool {
+	//包含计数器的组名
+	public static final String CONTAIN_KEY = "contain_key";
+	
+	//解析计数器的组名
+	public static final String ANALYZE_KEY = "analyze_key";
+	
+	//行数计数器的组名
+	public static final String LINE_KEY = "line_key";
+	
+	//大小计数器的组名
+	public static final String SIZE_KEY = "size_key";
+	
+	//文件名前缀防止 经常改名
+	public static String FILE_NAME_PREFIX = "";
+	
+	/**
+	 * 根据  配置文件的全路径 设置文件名前缀
+	 * @param gamePropertiesPath
+	 * eg：hdfs://master:49000/user/hadoop/etl/conf/xa.properties
+	 */
+	public static void setFileNamePrefix(String gamePropertiesPath) {
+		//获取配置的文件名称
+		String propertiesFileName = getSpiltLastFileName("/",gamePropertiesPath,1);//xa.properties
+		//获取游戏名称
+		String propertiesName = propertiesFileName.split("\\.")[0];//xa
+		//重新定义 
+		FILE_NAME_PREFIX = "gamelog_" + propertiesName + "_";//gamelog_xa_
+	}
+	
+	/**
+	 * 
+	 * @param key 切分的关键字
+	 * @param content 待切分的文本
+	 * @return
+	 */
+	public static boolean contains(String key,String content){
+		return content.contains(key);
+	}
+	
+	
+	/**
+	 * 根据spilt 的文件路径 获得文件的名称
+	 * @param filePath 
+	 * @return
+	 */
+	public static String getSpiltLastFileName(String symbol,String splitString,int number) {
+		String str[] = splitString.split(symbol);
+		
+		StringBuilder sb = new StringBuilder();
+		//如果切割出来了
+		if(str.length > 0 && number > 0) {
+			for(int start = str.length - number ; start < str.length; start++) {
+				if(start == str.length - 1) {
+					sb.append(str[start]);
+				}
+				else {
+					sb.append(str[start]).append(symbol);
+				}
+			}
+			//返回最后一个
+			return sb.toString();
+		}
+		
+		return "";
+	}
+	
+	/**
+	 *  获取stringTokenizer 最后一个值
+	 * @param stringTokenizer
+	 * @return
+	 */
+	public static String getStringTokenizerLastValue(StringTokenizer stringTokenizer){
+		String lastValue = "";
+		
+		 //循环遍历 
+		 while(stringTokenizer.hasMoreTokens()) {
+			 //只要最后一份
+			 lastValue = stringTokenizer.nextToken();
+		 }
+		 
+		 return lastValue;
+	}
+	
+	/**
+	 * 
+	 * @param stringTokenizer
+	 * @param symbol 分隔符号
+	 * @return
+	 */
+	public static String getStringTokenizerLastValue(String str,String symbol){
+		StringTokenizer stringTokenizer = new StringTokenizer(str,symbol);
+		
+		return getStringTokenizerLastValue(stringTokenizer);
+	}
+	
+	/**
+	 * 获取stringTokenizer 第一个值
+	 * @param stringTokenizer
+	 * @return
+	 */
+	public static String getStringTokenizerFirstValue(StringTokenizer stringTokenizer){
+		String firstValue = "";
+		
+		 //循环遍历 
+		 if(stringTokenizer.hasMoreTokens()) {
+			 //只要最后一份
+			 firstValue = stringTokenizer.nextToken();
+		 }
+		 
+		 return firstValue;
+	}
+	
+	/**
+	 * 统计包含关键字的数量
+	 * @param counterName 统计名称
+	 * @param context hadoop context
+	 */
+	@SuppressWarnings("rawtypes")
+	public static void countContainKeyNumber(String counterName,Context context) {
+		context.getCounter(CONTAIN_KEY,counterName).increment(1);
+	}
+	
+	/**
+	 * 减去包含关键字的数量
+	 * @param counterName 统计名称
+	 * @param context hadoop context
+	 */
+	@SuppressWarnings("rawtypes")
+	public static void minusContainKeyNumber(String counterName,Context context) {
+		context.getCounter(CONTAIN_KEY,counterName).increment(-1);
+	}
+	
+	/**
+	 * 统计解析key的数量
+	 * @param counterName
+	 * @param context
+	 */
+	@SuppressWarnings("rawtypes")
+	public static void countAnalyzeKeyNumber(String counterName,Context context) {
+		context.getCounter(ANALYZE_KEY,counterName).increment(1);
+	}
+	
+	/**
+	 * 行数计数器
+	 * @param counterName
+	 * @param context
+	 */
+	@SuppressWarnings("rawtypes")
+	public static void countLineKeyNumber(String counterName,org.apache.hadoop.mapreduce.Reducer.Context context) {
+		StringTokenizer stringTokenizer = new StringTokenizer(counterName,"/");
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append(stringTokenizer.nextToken()).append("/").append(stringTokenizer.nextToken());
+		
+		context.getCounter(LINE_KEY,sb.toString()).increment(1);
+	}
+	
+	/**
+	 * 文件大小的计数器
+	 * @param counterName
+	 * @param context
+	 * @param content
+	 */
+	@SuppressWarnings("rawtypes")
+	public static void countSizeKeyNumber(String counterName,org.apache.hadoop.mapreduce.Reducer.Context context,String content) {
+		StringTokenizer stringTokenizer = new StringTokenizer(counterName,"/");
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append(stringTokenizer.nextToken()).append("/").append(stringTokenizer.nextToken());
+		
+		long length = content.getBytes().length;
+		context.getCounter(SIZE_KEY,sb.toString()).increment(length);
+	}
+	
+	/**
+	 * 
+	 * @param conf 
+	 * @param confPath
+	 * @return
+	 */
+	public static int getReduceNumber(Configuration conf,String confPath) {
+		int reduceNumber = 0;
+		
+		Path path = new Path(confPath);
+		FileSystem fileSystem = null;
+		InputStream inputStream = null;
+		
+		try {
+			fileSystem = FileSystem.get(path.toUri(),conf);
+			inputStream  = fileSystem.open(path );
+		} catch (IOException e) {
+		}
+		//获得properties
+		Properties properties = GameProperties.getProperties(inputStream);
+		
+		//分割的符号
+		String splitSymbol = properties.getProperty("game.split.symbol");
+		//游戏文件名称过滤
+		String gameFileNameFilter = properties.getProperty("game.file.name.filter");
+		
+		//gameFileNameFilter 切分
+		StringTokenizer gameFileNameFilterStringTokenizer = new StringTokenizer(gameFileNameFilter,splitSymbol);
+		//循环遍历
+		while(gameFileNameFilterStringTokenizer.hasMoreTokens()) {
+			// 下一个遍历结果
+			String gameFileNameFilterNextToken = gameFileNameFilterStringTokenizer.nextToken().trim();
+			
+			//这款游戏种类 需要过滤的 类型
+			String gameKindFilterType = properties.getProperty(gameFileNameFilterNextToken + ".filter.type");
+			
+			//gameKindFilterType 切分
+			StringTokenizer gameKindFilterTypeStringTokenizer = new StringTokenizer(gameKindFilterType,splitSymbol);
+			
+			//循环迭代
+			while(gameKindFilterTypeStringTokenizer.hasMoreTokens()) {
+				//游戏种类过滤类型 下一个
+				String gameKindFilterTypeNextToken = gameKindFilterTypeStringTokenizer.nextToken().trim();
+				
+				//没有*_1 *_2 这样类型的
+				String reg = "^*_(\\d+)$";
+				
+				Pattern p = Pattern.compile(reg);
+				Matcher m = p.matcher(gameKindFilterTypeNextToken);
+				
+				//匹配上说明是 一个文件对应多个正则的模设计
+				//跳过
+				if(m.find()) {
+					continue;
+				}
+				
+				reduceNumber ++;
+			}
+		}
+		
+		return reduceNumber;
+	}
+	
+	/**
+	 * 保存统计数量
+	 * @param job
+	 * @param conf
+	 * @param path
+	 */
+	public static void saveDayCountNumber(Job job,Configuration conf,String outPutString) {
+		// 组名
+		CounterGroup lineGroup = null;
+		// 组名
+		CounterGroup sizeGroup = null;
+		
+		try {
+			lineGroup = job.getCounters().getGroup(LINE_KEY);
+			sizeGroup = job.getCounters().getGroup(SIZE_KEY);
+		} catch (IOException e) {
+		}
+		
+		//迭代
+		Iterator <Counter> lineIterator = lineGroup.iterator();
+		
+		//统计的集合
+		List<String> lineList = new ArrayList<String>();
+		lineList.add("           line         size");
+		
+		//包含的
+		while(lineIterator.hasNext()) {
+			Counter lineCounter = lineIterator.next();
+			
+			String displayName = lineCounter.getDisplayName();
+			long line = lineCounter.getValue();
+			
+			//保存的信息
+			StringBuilder stringBuilder = new StringBuilder();
+			
+			stringBuilder.append(displayName);
+			
+			for(int i = 0 ; i < (70 - displayName.length()); i++) {
+				stringBuilder.append(" ");
+			}
+			
+			stringBuilder.append(line).append(":");
+			
+			//大小的值
+			long sizeValue = sizeGroup.findCounter(displayName).getValue() + line;
+			
+		    stringBuilder.append(sizeValue);
+			
+			
+			 //最后计数器的数据
+			lineList.add(stringBuilder.toString());
+		}
+		
+		//hadoop 文件系统
+		FileSystem hdfs = null;
+		FSDataOutputStream out = null;
+		Path outPath = new Path(outPutString+ "/counter/file");
+		
+		try {
+			hdfs = FileSystem.get(outPath.toUri(),conf);
+			out = hdfs.create(outPath );
+			
+			//循环输出
+			for(String st  : lineList) {
+				out.writeBytes(st + "\n");
+			}
+			
+			//关闭
+			out.close();
+			hdfs.close();
+		} catch (IOException e) {
+		}
+	}
+	
+	/**
+	 * 保存统计数量
+	 * gameName 
+	 * @param job
+	 * @param conf
+	 * @param path
+	 */
+	public static void saveHourCountNumber(String gamePropertiesPath,Job job,Configuration conf,String path) {
+		//包含 的 组名
+		CounterGroup containGroup = null;
+		//解析 的 组名
+		CounterGroup analyzeGroup = null;
+		
+		try {
+			containGroup = job.getCounters().getGroup(GameTool.CONTAIN_KEY);
+			analyzeGroup = job.getCounters().getGroup(GameTool.ANALYZE_KEY);
+		} catch (IOException e) {
+		}
+		
+		//迭代
+		Iterator <Counter> containIterator = containGroup.iterator();
+		
+		//统计的集合
+		List<String> countList = new ArrayList<String>();
+		countList.add("           contain         Analyze");
+		
+		String gamePrefix = "";
+		
+		if(gamePropertiesPath != null) {
+			String propertiesFileName = getSpiltLastFileName("/",gamePropertiesPath,1);
+			//获取游戏名称
+			String propertiesName = propertiesFileName.split("\\.")[0];
+			//重新定义 
+			gamePrefix = "gamelog_" + propertiesName + "_";
+		}
+		
+		//包含的
+		while(containIterator.hasNext()) {
+			Counter containCounter = containIterator.next();
+			//保存的信息
+			StringBuilder stringBuilder = new StringBuilder();
+			
+			//显示的名称
+			String displayName = containCounter.getDisplayName().toString().trim();
+			
+			//之前的名称
+			String beforeDisplayName = displayName;
+			
+			//游戏文件全名
+			if(gamePropertiesPath != null) {
+				displayName = displayName.split("/")[0] + "/" + gamePrefix + displayName.split("/")[1];
+			}
+			
+			//包含的数据
+			stringBuilder.append(displayName);
+			
+			for(int i = 0 ; i < (70 - displayName.length()); i++) {
+				stringBuilder.append(" ");
+			}
+			
+			stringBuilder.append(containCounter.getValue()).append(",");
+			
+			//解析后的数据
+			long analyzeValue = analyzeGroup.findCounter(beforeDisplayName).getValue();
+			
+		    stringBuilder.append(analyzeValue);
+			 //最后计数器的数据
+			countList.add(stringBuilder.toString());
+		}
+		
+		//hadoop 文件系统
+		FileSystem hdfs = null;
+		FSDataOutputStream out = null;
+		Path outPath = new Path(path+ "/counter/file");
+		
+		try {
+			hdfs = FileSystem.get(outPath.toUri(),conf);
+			out = hdfs.create(outPath );
+			
+			//循环输出
+			for(String st  : countList) {
+				out.writeBytes(st + "\n");
+			}
+			
+			//关闭
+			out.close();
+			hdfs.close();
+		} catch (IOException e) {
+		}
+	}
+	
+	/**
+	 * 保存统计数量
+	 * @param job
+	 * @param conf
+	 * @param path
+	 */
+	public static void saveHourCountNumber( Job job,Configuration conf,String path) {
+		saveHourCountNumber(null, job, conf, path);
+	}
+	
+	/**
+	 * 获得utf8的字符串
+	 * @param input 输入
+	 * @return
+	 */
+	public static String getUTF8String(String input) {
+		try {
+			return new String(input.getBytes("ISO-8859-1"),"UTF-8");
+		} catch (UnsupportedEncodingException e) {
+		}
+		
+		return "";
+	}
+	
+	/**
+	 * 获得昨天的日期 2014-03-21
+	 * @param today 今天的日期
+	 * @return
+	 */
+	public static String getYesterdayString(String todayString) {
+		//日期格式
+		SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		
+		try {
+			//日期 今天
+			Date today = simpleDateFormat.parse(todayString);
+			//初始实例
+			Calendar calendar = Calendar.getInstance();  
+			//设置
+			calendar.setTime(today);
+			// 昨天时间
+			calendar.add(Calendar.DATE, -1);
+			
+			return simpleDateFormat.format(calendar.getTime());
+		} catch (ParseException e) {
+		}
+		
+		return todayString;
+	}
+	
+	/**
+	 * 一个游戏文件生成,可能需要多
+	 * 例如:statinfom_1  ,statinfom_2等
+	 * @param gameKindFilterType
+	 * @return
+	 */
+	public static String getRealFileName(String gameKindFilterType) {
+		//下划线切分
+		StringTokenizer underlineStringTokenizer = new StringTokenizer(gameKindFilterType,"_");//stone_combine
+		
+		//最后的值
+		String lastValue = GameTool.getStringTokenizerLastValue(underlineStringTokenizer);
+		
+		//正确的文件名称
+		String fileName = gameKindFilterType.substring(0,(gameKindFilterType.length() -  (lastValue.length() + 1)));//stone
+		
+		return fileName;
+	}
+	
+	/**
+	 * 获得天合并需要的文件生成目录结构
+	 * 兼容hive的需要
+	 * @param line
+	 * @return
+	 */
+	public static String getDayFileName(String line) {
+		 //分割
+	    StringTokenizer lastStringTokenizer =  new StringTokenizer(line,"%");
+			
+	    //最后一个切分 就是生成的文件目录
+        String lastString = getStringTokenizerLastValue(lastStringTokenizer);
+        
+        //文件目录切分
+        StringTokenizer fileNameStringTokenizer =  new StringTokenizer(lastString,"/");
+
+        if(fileNameStringTokenizer.countTokens() == 4) {
+        	//不要过滤掉
+        	String date = fileNameStringTokenizer.nextToken();
+            
+            return lastString.substring((date.length() + 1),lastString.length());
+        }
+        
+       return "";
+	}
+	
+	/**
+	 * 删除part-* 与 _SUCCESS 这样无用的文件
+	 * @param conf
+	 * @param path
+	 */
+	@SuppressWarnings("deprecation")
+	public static void deletePartAndSuccessFile(Configuration conf,String path) {
+		//hadoop 文件系统
+		FileSystem hdfs = null;
+		
+		// 输出的路径
+		Path part = new Path(path+ "/part-*");
+		
+		Path success = new Path(path+ "/_SUCCESS");
+		
+		try {
+			hdfs = FileSystem.get(part.toUri(),conf);
+			
+	    	FileStatus[] status=hdfs.globStatus(part);
+	    	Path[] listedPaths = FileUtil.stat2Paths(status);
+	    	//循环加入完整路径
+	        for (Path p : listedPaths) {
+	        	//如果存在了
+				if(hdfs.exists(p)) {
+					//存在就删掉
+					hdfs.delete(p);
+				}
+	        }
+	        
+	        //
+	        if(hdfs.exists(success)) {
+	        	hdfs.delete(success);
+	        }
+		
+		} catch (IOException e) {
+		}
+	}
+	
+	/**
+	 * 小时处理的job名称
+	 * @param conf
+	 * @param inputString
+	 * @param gamePropertiesPath
+	 * @return
+	 */
+	public static String getHourJobName(Configuration conf,String inputString,String gamePropertiesPath) {
+		//hadoop 文件路径
+	    FileSystem hdfs;
+	    
+		try {
+			hdfs = FileSystem.get(conf);
+			//多文件路径按逗号分隔
+		    String input[] = inputString.split(",");
+		    List<Path> listPath = new ArrayList<Path>();
+		    
+		    //循环通配符路径
+		    for(int i = 0; i < input.length; i++) {
+		    	Path path = new Path(input[i].trim());
+		    	FileStatus[] status=hdfs.globStatus(path);
+		    	Path[] listedPaths = FileUtil.stat2Paths(status, path);
+		    	
+		    	//转成数组加入
+		    	listPath.addAll(Arrays.asList(listedPaths));
+		    }
+		    
+		    //时间的map
+		    Map<String,List<Integer>> timeMap = new HashMap<String,List<Integer>>();
+		    
+		    for(Path p : listPath) {
+		    	//截取为日期和文件名的字符串
+		    	String dateAndFileName = getSpiltLastFileName("/", p.toString(), 2);
+		    	//再切分
+		    	String str[] = dateAndFileName.split("/");
+		    	
+		    	//如果切分为两份
+		    	if(str.length == 2) {
+		    		//日期的字符串
+		    		String dateString = str[0];
+		    		//文件名称
+		    		String fileName = str[1];
+		    		
+		    		//小时时间字符串
+		    		String hourString = getSpiltLastFileName("\\.", fileName, 1);
+		    		
+		    		//时间的集合
+		    		List <Integer> hourList = timeMap.get(dateString);
+		    		
+		    		//如果没有这种日期的
+		    		if(hourList == null) {
+		    			hourList = new ArrayList<Integer>();
+		    			hourList.add(Integer.parseInt(hourString));
+		    			//放入map
+		    			timeMap.put(dateString, hourList);
+		    		}else {
+		    			int hour = Integer.parseInt(hourString);
+		    			//如果不包含则放进去
+		    			if(!hourList.contains(hour)) {
+		    				hourList.add(hour);
+		    				
+		    				//放入map
+			    			timeMap.put(dateString, hourList);
+		    			}
+		    		}
+		    	}
+		    }
+		    
+		    StringBuilder stringBuilder = new StringBuilder();
+		    //获取配置的文件名称
+			String propertiesFileName = getSpiltLastFileName("/",gamePropertiesPath,1);
+			//获取游戏名称
+			String propertiesName = propertiesFileName.split("\\.")[0];
+			
+			stringBuilder.append(propertiesName).append(",");
+		    
+    		//遍历map
+    		Iterator<String> iterator = timeMap.keySet().iterator();
+    		
+    		while(iterator.hasNext()) {
+    			//日期的字符串
+    			String dateString = iterator.next();
+    			stringBuilder.append("日期:").append(dateString).append(",").append("小时:");
+    			
+    			//时间的集合
+    			List <Integer> hourList = timeMap.get(dateString);
+    			
+    			//如果是一天的数据
+    			if(hourList.size() == 24) {
+    				stringBuilder.append("0--23小时的所有数据;");
+    			}else {
+    				for(int i = 0; i < (hourList.size() - 1); i++) {
+        				stringBuilder.append(hourList.get(i)).append(",");
+        			}
+        			//不要逗号
+        			stringBuilder.append(hourList.get(hourList.size() - 1)).append(";");
+    			}
+    		}
+    		
+    		return stringBuilder.toString();
+		} catch (Exception e) {
+		}
+		
+		return "";
+	}
+	
+	/**
+	 * 天处理任务的名称
+	 * @param outPutString
+	 * @param gamePropertiesPath
+	 * @return
+	 */
+	public static String getDayJobName(String outPutString,String gamePropertiesPath) {
+		String string[] = outPutString.split("-");
+		
+		//如果长度为3
+		if(string.length == 3) {
+			StringBuilder stringBuilder = new StringBuilder();
+			
+			//获取配置的文件名称
+			String propertiesFileName = getSpiltLastFileName("/",gamePropertiesPath,1);
+			//获取游戏名称
+			String propertiesName = propertiesFileName.split("\\.")[0];
+			
+			stringBuilder.append(propertiesName).append(",");
+			
+			String year = getSpiltLastFileName("/",string[0],1);
+			String month = string[1];
+			String day = string[2].split("/")[0];
+			
+			stringBuilder.append("日期:").append(year).append("-").append(month).append("-").append(day).append(",一天的数据");
+			
+			return stringBuilder.toString();
+		}
+		
+		return "";
+	}
+}

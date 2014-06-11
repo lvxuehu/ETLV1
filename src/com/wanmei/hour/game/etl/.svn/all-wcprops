@@ -1,0 +1,59 @@
+K 25
+svn:wc:ra_dav:version-url
+V 122
+/svn/datasupport/!svn/ver/4118/datasupport/project/GameETL/ETLProject/Version1.0/GameETL1.2.1/src/com/wanmei/hour/game/etl
+END
+GameSnapshotKind.java
+K 25
+svn:wc:ra_dav:version-url
+V 144
+/svn/datasupport/!svn/ver/4005/datasupport/project/GameETL/ETLProject/Version1.0/GameETL1.2.1/src/com/wanmei/hour/game/etl/GameSnapshotKind.java
+END
+GameCombinationKind.java
+K 25
+svn:wc:ra_dav:version-url
+V 147
+/svn/datasupport/!svn/ver/3793/datasupport/project/GameETL/ETLProject/Version1.0/GameETL1.2.1/src/com/wanmei/hour/game/etl/GameCombinationKind.java
+END
+GameSameFilterKeyKind.java
+K 25
+svn:wc:ra_dav:version-url
+V 149
+/svn/datasupport/!svn/ver/4107/datasupport/project/GameETL/ETLProject/Version1.0/GameETL1.2.1/src/com/wanmei/hour/game/etl/GameSameFilterKeyKind.java
+END
+GameKindFilterType.java
+K 25
+svn:wc:ra_dav:version-url
+V 146
+/svn/datasupport/!svn/ver/4051/datasupport/project/GameETL/ETLProject/Version1.0/GameETL1.2.1/src/com/wanmei/hour/game/etl/GameKindFilterType.java
+END
+GameRegularCommonKind.java
+K 25
+svn:wc:ra_dav:version-url
+V 149
+/svn/datasupport/!svn/ver/4118/datasupport/project/GameETL/ETLProject/Version1.0/GameETL1.2.1/src/com/wanmei/hour/game/etl/GameRegularCommonKind.java
+END
+GameStringTokenizerCommonKind.java
+K 25
+svn:wc:ra_dav:version-url
+V 157
+/svn/datasupport/!svn/ver/3933/datasupport/project/GameETL/ETLProject/Version1.0/GameETL1.2.1/src/com/wanmei/hour/game/etl/GameStringTokenizerCommonKind.java
+END
+GameDisorderKind.java
+K 25
+svn:wc:ra_dav:version-url
+V 144
+/svn/datasupport/!svn/ver/3774/datasupport/project/GameETL/ETLProject/Version1.0/GameETL1.2.1/src/com/wanmei/hour/game/etl/GameDisorderKind.java
+END
+GameFileType.java
+K 25
+svn:wc:ra_dav:version-url
+V 140
+/svn/datasupport/!svn/ver/3655/datasupport/project/GameETL/ETLProject/Version1.0/GameETL1.2.1/src/com/wanmei/hour/game/etl/GameFileType.java
+END
+GameMultipleRegularKind.java
+K 25
+svn:wc:ra_dav:version-url
+V 151
+/svn/datasupport/!svn/ver/3893/datasupport/project/GameETL/ETLProject/Version1.0/GameETL1.2.1/src/com/wanmei/hour/game/etl/GameMultipleRegularKind.java
+END

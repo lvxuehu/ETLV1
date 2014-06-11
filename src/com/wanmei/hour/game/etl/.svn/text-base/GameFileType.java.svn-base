@@ -1,0 +1,66 @@
+package com.wanmei.hour.game.etl;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.StringTokenizer;
+
+import com.wanmei.game.jregex.Pattern;
+import com.wanmei.game.tool.GameTool;
+
+
+/**
+ * 
+ * 笑傲 读取文件路径的正则
+ *@author lihui
+ *
+ *  2013-8-4  下午04:11:43
+ */
+public class GameFileType {
+	/**
+	 * 装配map 并且返回
+	 * @return
+	 */
+	public static Map<String,Pattern> getPatternMap(Properties properties) {
+		//map
+		Map <String,Pattern> map =  new HashMap<String,Pattern>();
+		
+		//分割的符号
+		String splitSymbol = properties.getProperty("game.split.symbol");
+		//游戏文件名称过滤
+		String gameFileNameFilter = properties.getProperty("game.file.name.filter");
+		//游戏日志正则表达式前缀
+		String gameRegularFilterPrefix = properties.getProperty("game.regular.filter.prefix");
+		
+		//gameFileNameFilter 切分
+		StringTokenizer gameFileNameFilterStringTokenizer = new StringTokenizer(gameFileNameFilter,splitSymbol);
+		//循环遍历
+		while(gameFileNameFilterStringTokenizer.hasMoreTokens()) {
+			// 下一个遍历结果
+			String gameFileNameFilterNextToken = gameFileNameFilterStringTokenizer.nextToken().trim();
+			
+			//这款游戏种类 需要过滤的 类型
+			String gameKindFilterType = properties.getProperty(gameFileNameFilterNextToken + ".filter.type");
+			
+			//gameKindFilterType 切分
+			StringTokenizer gameKindFilterTypeStringTokenizer = new StringTokenizer(gameKindFilterType,splitSymbol);
+			
+			//循环迭代
+			while(gameKindFilterTypeStringTokenizer.hasMoreTokens()) {
+				//游戏种类过滤类型 下一个
+				String gameKindFilterTypeNextToken = gameKindFilterTypeStringTokenizer.nextToken();
+				
+				String regular = properties.getProperty(gameKindFilterTypeNextToken + ".regular.filter.key");
+				
+				//如果有正则表达式
+				if(regular != null) {
+					//表达式为 游戏日志前缀 + 游戏日志本身正则
+					Pattern pattern = new Pattern(GameTool.getUTF8String(gameRegularFilterPrefix + regular));
+					map.put(gameKindFilterTypeNextToken, pattern);
+				}
+			}
+		}
+		
+		return map;
+	}
+}

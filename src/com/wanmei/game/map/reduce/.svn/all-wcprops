@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 124
+/svn/datasupport/!svn/ver/3880/datasupport/project/GameETL/ETLProject/Version1.0/GameETL1.2.1/src/com/wanmei/game/map/reduce
+END
+DayGameETLRun.java
+K 25
+svn:wc:ra_dav:version-url
+V 143
+/svn/datasupport/!svn/ver/3880/datasupport/project/GameETL/ETLProject/Version1.0/GameETL1.2.1/src/com/wanmei/game/map/reduce/DayGameETLRun.java
+END
+HourGameETLRun.java
+K 25
+svn:wc:ra_dav:version-url
+V 144
+/svn/datasupport/!svn/ver/3854/datasupport/project/GameETL/ETLProject/Version1.0/GameETL1.2.1/src/com/wanmei/game/map/reduce/HourGameETLRun.java
+END
+LineRecordWriter.java
+K 25
+svn:wc:ra_dav:version-url
+V 146
+/svn/datasupport/!svn/ver/3342/datasupport/project/GameETL/ETLProject/Version1.0/GameETL1.2.1/src/com/wanmei/game/map/reduce/LineRecordWriter.java
+END
+MultipleOutputFormat.java
+K 25
+svn:wc:ra_dav:version-url
+V 150
+/svn/datasupport/!svn/ver/3342/datasupport/project/GameETL/ETLProject/Version1.0/GameETL1.2.1/src/com/wanmei/game/map/reduce/MultipleOutputFormat.java
+END

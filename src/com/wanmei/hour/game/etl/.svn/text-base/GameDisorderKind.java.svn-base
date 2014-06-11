@@ -1,0 +1,155 @@
+package com.wanmei.hour.game.etl;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
+
+import org.apache.hadoop.mapreduce.Mapper.Context;
+
+import com.wanmei.game.jregex.Matcher;
+import com.wanmei.game.jregex.Pattern;
+import com.wanmei.game.tool.GameTool;
+
+/**
+ * 游戏无序 类型etl
+ *@author lihui
+ *
+ *  2014-3-13  下午01:41:16
+ */
+public class GameDisorderKind {
+	/**
+	 * 日志处理
+	 * @param gameKindFilterType 游戏的文件名
+	 * @param gameMatcherIndex 解析的顺序
+	 * @param line 读取的一行
+	 * @param pro 配置文件
+	 * @param patternMap
+	 * @return
+	 */
+	@SuppressWarnings("rawtypes")
+	public static List<String> etl(String prefix,String gameKindFilterType,String gameMatcherIndex,String line,Map <String,Pattern> patternMap,Context context) {
+		//切分的开
+		Pattern pattern = patternMap.get(gameKindFilterType);
+
+		//如果map中不存在
+		if(pattern == null) {
+			return new ArrayList<String>();
+		}
+		
+		Matcher matcher = pattern.matcher(line);
+		
+		//如果匹配上了
+		if(matcher.find()) {
+			//计数器
+			GameTool.countAnalyzeKeyNumber(prefix + gameKindFilterType, context);
+			
+			//切割字符
+			StringTokenizer st = new StringTokenizer(gameMatcherIndex,",");
+			
+			//没切出来
+			if(st.countTokens() == 1) {
+				return new ArrayList<String>();
+			}
+			
+			//存储 位置
+			int indexArray[] = new int[st.countTokens()];
+			
+			//最大位置的值
+			int maxIndex = 0;
+			//位置
+			int step = -1;
+			
+			//遍历循环
+			while(st.hasMoreTokens()) {
+				try{
+					//顺序次位
+					int index = Integer.parseInt(st.nextToken().trim());
+					
+					//找出最大的位置
+					if(index > maxIndex) {
+						maxIndex = index;
+					}
+					
+					//++
+					step ++;
+					//加入顺序
+					indexArray[step] = index;
+				}catch (Exception e) {
+					// TODO: handle exception
+				}
+			}
+			
+			//如果最大的位置 比 解析出来的 数量 还大 说明
+			//位置设置的有问题
+			if(maxIndex > (matcher.groupCount() - 2)) {
+				return new ArrayList<String>();
+			}
+			
+			StringBuilder sb = new StringBuilder();
+			
+			//唯一标识
+			String uniqueMark = "";
+			
+			//循环  最后一个不要 
+			//
+			for(int i = 1; i <= indexArray.length; i++) {
+				if(i == 1) {
+					//第一个字段就是唯一标识的
+					uniqueMark = matcher.group(i);
+				}
+				else {
+					//匹配的内容
+					String matcherString = matcher.group(indexArray[i - 2] + 1);
+					
+					//如果为 空 字符串
+//					if(StringUtils.isBlank(matcherString)) {
+//						matcherString = " ";
+//					}
+					
+					//其他的是 etl 解析的
+					sb.append(matcherString + "\t");
+				}
+			}
+		    
+			//最后匹配上的
+			String lastMatcher = matcher.group(indexArray[indexArray.length - 1] + 1);
+			
+			//如果为空
+//			if(StringUtils.isBlank(lastMatcher)) {
+//				//加入最后一行 解析 解决最后一位不需要
+//				//制表符的问题
+//				sb.append(" ");
+//			}else{
+				sb.append(lastMatcher);
+//		/	}
+			
+			//在最后面 加入唯一标识
+			sb.append("!").append(uniqueMark);
+			
+			//唯一标识按“=” 切割 
+			StringTokenizer stringTokenizer =  new StringTokenizer(uniqueMark,"=");	
+			
+			//	取得服务器组号
+			String  groupNumnber = GameTool.getStringTokenizerLastValue(stringTokenizer) + "\t";
+			
+			//20 这个位置是时间日期的长度 不会改变
+			sb.insert(20,groupNumnber);
+			
+			//截取 日期 2014-03-05
+			String date = sb.substring(0, 10);
+			
+			gameKindFilterType = GameTool.FILE_NAME_PREFIX + gameKindFilterType;
+
+			//字符串样式etl内容!唯一标识%生成文件的目录
+			sb.append("%").append(date).append("/").append(prefix).append(gameKindFilterType).append("/").append(gameKindFilterType);
+			
+			List <String> list = new ArrayList<String>();
+			list.add(sb.toString());
+			
+			return list;
+		}
+		
+		return new ArrayList<String>();
+	}
+}
