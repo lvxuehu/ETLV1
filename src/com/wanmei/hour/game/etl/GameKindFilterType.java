@@ -95,6 +95,7 @@ public class GameKindFilterType {
 				}
 				
 				//过滤的关键字都一样
+				//clear360cash.has.same.filter.key=clear360
 				String sameFilterKey = pro.getProperty(gameKindFilterTypeNextToken + ".has.same.filter.key");
 				
 				//存在

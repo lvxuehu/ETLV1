@@ -156,10 +156,14 @@ public class GameTool {
 	/**
 	 * 统计包含关键字的数量
 	 * @param counterName 统计名称
+	 * 应该等于
+	 * zx.world2.formatlog.filter.type=lottery;rolelogout_gs;forbiduser_question;newbie_exit_game_reason;getattach;gbonusshop_trade;accountlogin;accountlogin_1;accountlogin_2;rolelogin;rolelogout;deleterole;accountlogout;accountlogout_1;accountlogout_2;task_complete;gamemailbox;regmailbox;gamemailbox_award;regmailbox_award;obtain_cash_gift;addcash;stockbalance;gmlog;shoptrade;task_abort;task_accept;territoryowner;forbiduser;clear360cash;clear360item
+	 的和
 	 * @param context hadoop context
 	 */
 	@SuppressWarnings("rawtypes")
 	public static void countContainKeyNumber(String counterName,Context context) {
+		//System.out.println("counterName="+counterName);
 		context.getCounter(CONTAIN_KEY,counterName).increment(1);
 	}
 	
@@ -358,6 +362,8 @@ public class GameTool {
 	 * @param job
 	 * @param conf
 	 * @param path
+	 * gamePropertiesPath=hdfs://master:49000/user/hadoop/etl/conf/xa.properties
+	 * path=hdfs://master:49000/export/bisql/gamesql/xa/2014-05-29/hour1
 	 */
 	public static void saveHourCountNumber(String gamePropertiesPath,Job job,Configuration conf,String path) {
 		//包含 的 组名
@@ -381,11 +387,12 @@ public class GameTool {
 		String gamePrefix = "";
 		
 		if(gamePropertiesPath != null) {
-			String propertiesFileName = getSpiltLastFileName("/",gamePropertiesPath,1);
+			//gamePropertiesPath=hdfs://master:49000/user/hadoop/etl/conf/xa.properties
+			String propertiesFileName = getSpiltLastFileName("/",gamePropertiesPath,1);//xa.properties
 			//获取游戏名称
-			String propertiesName = propertiesFileName.split("\\.")[0];
+			String propertiesName = propertiesFileName.split("\\.")[0];//xa
 			//重新定义 
-			gamePrefix = "gamelog_" + propertiesName + "_";
+			gamePrefix = "gamelog_" + propertiesName + "_";//gamelog_xa_
 		}
 		
 		//包含的
@@ -420,6 +427,7 @@ public class GameTool {
 		    stringBuilder.append(analyzeValue);
 			 //最后计数器的数据
 			countList.add(stringBuilder.toString());
+			System.out.println("GameTool count countlist row="+stringBuilder.toString());
 		}
 		
 		//hadoop 文件系统
@@ -512,6 +520,13 @@ public class GameTool {
 		return fileName;
 	}
 	
+	
+	public static void main(String args []){
+		String s="abcd";
+		String s1=getRealFileName(s);
+		System.out.println("s1="+s1);
+	}
+	
 	/**
 	 * 获得天合并需要的文件生成目录结构
 	 * 兼容hive的需要
@@ -563,12 +578,14 @@ public class GameTool {
 	        	//如果存在了
 				if(hdfs.exists(p)) {
 					//存在就删掉
+					System.out.println("delete hdfs part-* file");
 					hdfs.delete(p);
 				}
 	        }
 	        
 	        //
 	        if(hdfs.exists(success)) {
+	        	System.out.println("delete hdfs success-* file");
 	        	hdfs.delete(success);
 	        }
 		

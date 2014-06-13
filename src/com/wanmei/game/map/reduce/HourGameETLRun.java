@@ -166,7 +166,7 @@ public class HourGameETLRun {
 //			log日期=2014-09-23
 //			gameFileName = xa.world2.formatlog
 //			prefix="xa.world2.formatlog/"
-//			gameKindFilterTypeSplit每个log中每种日志格式的正则名称集合
+//			gameKindFilterTypeSplit每个log文件中日志格式的正则名称集合
 //			line=value.toString() 一行数据
 //			gameFileName=xa.world2.formatlog
 			// 过滤之后的内容 gamefilename=xa.world2.formatlog
@@ -179,6 +179,10 @@ public class HourGameETLRun {
 			// mos.write(value, NullWritable.get(),"noRegular/");
 			// }
 
+			//===========================================
+			//为什么一个etl方法返回的时一个list，而不是string。
+			//etl方法中分会的空list如何处理了？
+			//=========================================
 			for (String content : contentList) {
 				// 匹配文本的关键字
 				key_word.set(content);
@@ -316,7 +320,7 @@ public class HourGameETLRun {
 		// 多文件路径按逗号分隔
 		String input[] = otherArgs[0].trim().split(",");
 
-		// 如果切割开了
+		// 如果切割开了，如果有多个输入文件
 		if (input.length > 1) {
 			// 循环通配符路径
 			for (int i = 0; i < input.length; i++) {
@@ -338,7 +342,13 @@ public class HourGameETLRun {
 		// Path("hdfs://test02:9000/export/gamelog/xa/2014-02-28"));
 		// FileOutputFormat.setOutputPath(job, new
 		// Path("hdfs://test02:9000/export/bisql/gamesql/xa/2014-02-28/08"));
-		if (job.waitForCompletion(true)) {
+		boolean runResult=job.waitForCompletion(true);
+		
+		//jar包调用的参数
+		//hdfs://master:49000/export/gamelog/xa/2014-05-29/xa.world2.formatlog.1.00  
+		//hdfs://master:49000/export/bisql/gamesql/xa/2014-05-29/hour1  
+		//hdfs://master:49000/user/hadoop/etl/conf/xa.properties 20
+		if (runResult) {//如果执行完成
 			// 计数器的统计
 			GameTool.saveHourCountNumber(otherArgs[2].trim(), job, conf,
 					otherArgs[1].trim());

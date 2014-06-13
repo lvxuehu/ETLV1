@@ -121,7 +121,7 @@ public class GameSameFilterKeyKind {
 	@SuppressWarnings("rawtypes")
 	private static List<String> clear360Etl(Properties pro,String prefix,String line,Map <String,Pattern> patternMap,Context context,String gameFileName) {
 		List<String> clear360cashList = commonEtl(pro,prefix, line, patternMap, context,"clear360cash");
-		List<String> clear360itemList = clear360itemEtl(prefix, line, patternMap, context,gameFileName);
+		List<String> clear360itemList = clear360itemEtl(prefix, line, patternMap, context,gameFileName);//gameFileName=sdxl.world2.formatlog
 		
 		//全包含
 		List <String>list = new ArrayList<String>();
@@ -217,10 +217,11 @@ public class GameSameFilterKeyKind {
 			
 			for(int i = 0; i < list.size(); i++) {
 				String countName = prefix + gameKindFilterType;
-				
+				//=====================================两个方法为什么相同？======================================================
 				//计数器
 				GameTool.countContainKeyNumber(countName, context);
 				GameTool.countAnalyzeKeyNumber(countName, context);
+				//===========================================================================================
 				
 				StringBuilder stringBuilder = new StringBuilder();
 				//在最后面 加入唯一标识
@@ -252,6 +253,11 @@ public class GameSameFilterKeyKind {
 	}
 	
 	//公用的
+	//prefix="xa.world2.formatlog/"
+//	clear360cash.special.filter.key=formatlog:clear360
+//	clear360cash.regular.filter.key=(\\d+-\\d+-\\d+\\s+\\d+:\\d+:\\d+).+formatlog:\\bclear360\\b:userid=(.+):logintime=(.+):cash_delta=(.+?);(.*)$
+//	clear360cash.has.same.filter.key=clear360
+	//gameKindFilterType="clear360"
 	@SuppressWarnings("rawtypes")
 	private static List<String> commonEtl(Properties pro,String prefix,String line,Map <String,Pattern> patternMap,Context context,String gameKindFilterType) {
 		//切分的开
@@ -266,19 +272,20 @@ public class GameSameFilterKeyKind {
 		
 		//说明一个文件是多个正则
 		//每个正则的关键字还不一致
+		//statinfom_1.has.index.number=true //是否有“_”，如果true，则有下划线。
 		String hasIndexNumber = pro.getProperty(gameKindFilterType + ".has.index.number");
 		
-		//获取正确的文件名称
+		//获取正确的文件名称。如果gameKindFilterType中与“_”，比如  aaa_bbbb
 		if(hasIndexNumber != null) {
 			//真的文件名称
 			String realFileName = GameTool.getRealFileName(gameKindFilterType);
-			GameTool.countContainKeyNumber(prefix + realFileName, context);
+			GameTool.countContainKeyNumber(prefix + realFileName, context);// xa.world2.formatlog/aaa
 		}else{
 			//通过了说明包含解析的key
-			GameTool.countContainKeyNumber(prefix + gameKindFilterType, context);
+			GameTool.countContainKeyNumber(prefix + gameKindFilterType, context);//xa.world2.formatlog/aaabbb
 		}
 		
-		//如果匹配上了
+		//如果匹配上了，计数器再次加1 why？
 		if(matcher.find()) {
 			//真的文件名称
 			String realFileName = "";
